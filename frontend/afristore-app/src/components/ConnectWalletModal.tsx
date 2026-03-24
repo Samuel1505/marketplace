@@ -35,6 +35,18 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
 
     const [hasStartedConnect, setHasStartedConnect] = useState(false);
 
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+    // Give auto-detection some time before showing "Not Installed"
+    useEffect(() => {
+        if (status !== "NOT_INSTALLED") {
+            setIsInitialLoading(false);
+            return;
+        }
+        const timer = setTimeout(() => setIsInitialLoading(false), 2000);
+        return () => clearTimeout(timer);
+    }, [status]);
+
     // Close when connected
     useEffect(() => {
         if (status === "CONNECTED" && hasStartedConnect) {
@@ -76,20 +88,28 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
                 </div>
 
                 <div className="p-6 pt-4">
-                    <p className="text-sm text-gray-500 mb-6">
-                        Join Afristore to discover, collect, and support authentic African digital art.
+                    <p className="text-sm text-gray-500 mb-6 font-medium">
+                        Securely connect your wallet to interact with African digital art.
                     </p>
 
                     {/* Status-based views */}
                     <div className="space-y-4">
-                        {status === "NOT_INSTALLED" ? (
+                        {isInitialLoading && status === "NOT_INSTALLED" ? (
+                            <div className="py-16 flex flex-col items-center justify-center space-y-4 animate-fade-in">
+                                <div className="relative">
+                                    <div className="h-16 w-16 rounded-full border-4 border-brand-100 border-t-brand-500 animate-spin" />
+                                    <Wallet className="absolute inset-0 m-auto text-brand-500" size={24} />
+                                </div>
+                                <p className="text-sm text-gray-500 font-medium animate-pulse">Detecting Freighter Wallet...</p>
+                            </div>
+                        ) : status === "NOT_INSTALLED" ? (
                             <div className="rounded-2xl border-2 border-brand-100 bg-brand-50/30 p-5 text-center transition-all duration-300">
                                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
                                     <AlertTriangle size={24} />
                                 </div>
-                                <h3 className="font-display font-bold text-midnight-900">Freighter Missing</h3>
+                                <h3 className="font-display font-bold text-midnight-900">Freighter Not Found</h3>
                                 <p className="mt-2 text-xs text-brand-700 leading-relaxed">
-                                    To interact with Afristore, you need the Freighter wallet extension for Stellar.
+                                    We couldn't detect the Freighter wallet. Please install it to continue.
                                 </p>
                                 <a
                                     href="https://www.freighter.app/"
@@ -103,7 +123,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
                                     onClick={refresh}
                                     className="mt-3 block w-full text-xs text-brand-500 hover:underline font-medium"
                                 >
-                                    Installed it? Click here to refresh
+                                    Already installed? Refresh detection
                                 </button>
                             </div>
                         ) : status === "WRONG_NETWORK" ? (

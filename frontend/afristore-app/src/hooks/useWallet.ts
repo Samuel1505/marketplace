@@ -64,24 +64,34 @@ export function useWallet(): WalletState {
         const key = await getConnectedPublicKey();
         if (key) {
           setPublicKey(key);
-          // Also fetch network info if possible
-          const account = await connectFreighter().catch(() => null);
-          if (account) {
-            setNetworkPassphrase(account.networkPassphrase);
-          }
-        } else {
-          setPublicKey(null);
-          setNetworkPassphrase(null);
+          // Only fetch network info if we are fairly sure we can
+          // connectFreighter() can sometimes trigger a popup, which we want to avoid during "refresh"
+          // Let's assume the network is correct for now or just trust the state
         }
       } catch (err) {
-        console.error("Wallet refresh error:", err);
+        console.error("Wallet auto-detection error:", err);
       }
     }
   }, []);
 
-  // Check install status + auto-reconnect on mount.
+  // Check install status + poll for a few seconds on mount.
   useEffect(() => {
     refresh();
+
+    // Extensions sometimes take a moment to inject window objects
+    const interval = setInterval(() => {
+      refresh();
+    }, 800);
+
+    // Stop polling after 4 seconds (5 attempts)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 4000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, [refresh]);
 
   const connect = useCallback(async () => {

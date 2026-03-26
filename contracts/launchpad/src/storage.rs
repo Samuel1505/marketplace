@@ -64,22 +64,41 @@ pub fn get_wasm_lazy_1155(env: &Env) -> Option<BytesN<32>> {
 }
 
 pub fn collections_by_creator(env: &Env, creator: &Address) -> Vec<CollectionRecord> {
-    env.storage()
-        .persistent()
-        .get(&DataKey::ByCreator(creator.clone()))
-        .unwrap_or(Vec::new(env))
+    let count = creator_collection_count(env, creator);
+    let mut result = Vec::new(env);
+    let mut i = 0u64;
+
+    while i < count {
+        if let Some(collection) = creator_collection_by_index(env, creator, i) {
+            result.push_back(collection);
+        }
+        i += 1;
+    }
+
+    result
 }
 
 pub fn all_collections(env: &Env) -> Vec<CollectionRecord> {
-    env.storage()
-        .persistent()
-        .get(&DataKey::AllCollections)
-        .unwrap_or(Vec::new(env))
+    let count = collection_count(env);
+    let mut result = Vec::new(env);
+    let mut i = 0u64;
+
+    while i < count {
+        if let Some(collection) = collection_by_index(env, i) {
+            result.push_back(collection);
+        }
+        i += 1;
+    }
+
+    result
 }
 
 // Counter for total collections ever deployed through this launchpad. 
 pub fn collection_count(env: &Env) -> u64 {
-    env.storage().instance().get(&DataKey::CollectionCount).unwrap_or(0)
+    env.storage()
+        .persistent()
+        .get(&DataKey::CollectionCount)
+        .unwrap_or(0)
 }
 
 
@@ -128,7 +147,7 @@ pub fn record_collection(env: &Env, creator: &Address, address: &Address, kind: 
 
     // Increment global counter
     let next = global_idx + 1;
-    env.storage().instance().set(&DataKey::CollectionCount, &next);
+    env.storage().persistent().set(&DataKey::CollectionCount, &next);
 }
 
 /// Get a collection by global index.

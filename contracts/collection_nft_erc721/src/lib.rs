@@ -312,6 +312,9 @@ impl NormalNFT721 {
     }
 
     fn _transfer(env: &Env, from: &Address, to: &Address, token_id: u64) -> Result<(), Error> {
+        // [SECURITY] Clear single-token approval on every transfer (#50)
+        env.storage().persistent().remove(&DataKey::Approved(token_id));
+
         let owner: Address = env.storage().persistent()
             .get(&DataKey::Owner(token_id))
             .ok_or(Error::TokenNotFound)?;

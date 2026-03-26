@@ -43,7 +43,7 @@ fn test_set_treasury_and_protocol_fee() {
     assert_eq!(client.get_treasury(), Some(treasury.clone()));
     // Set protocol fee to 500 bps (5%)
     client.set_protocol_fee(&artist, &500u32);
-    assert_eq!(client.get_protocol_fee(), Some(500u32));
+    assert_eq!(client.get_protocol_fee(), 500u32);
     // Create listing and buy artwork
     let cid = bytes!(&env, 0x516d74657374);
     let price = 10_000_000_i128;
